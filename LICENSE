@@ -1,0 +1,25 @@
+Outlier Desktop App — Proprietary Commercial Software
+
+Copyright (c) 2025 Kerr & Company LLC. All rights reserved.
+
+This repository distributes signed Mac binaries of the Outlier desktop
+application. The binaries are free to download. Use of the application is
+governed by the terms at https://outlier.host/terms and the privacy policy
+at https://outlier.host/privacy.
+
+NO SOURCE CODE LICENSE IS GRANTED. The application source code is not
+included in this repository and is not made available under any open-
+source license. Reverse engineering, decompilation, or redistribution
+of the binaries is prohibited except as permitted by applicable law.
+
+The following tiers are free to use without a paid license:
+  • Outlier Nano (4B)
+  • Outlier Lite (9B)
+  • OpenAI / Anthropic API support via your own API keys
+
+Paid tiers (Pro, Founders Lifetime, etc.) require a valid license key
+obtained from https://outlier.host. See the in-app Settings → license
+section for activation.
+
+For commercial licensing inquiries or enterprise terms, contact
+matt@outlier.host.
