@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Support
+    url: mailto:matt@outlier.host
+    about: For purchase questions, license activation, or quick help.
+  - name: 🌐 outlier.host
+    url: https://outlier.host
+    about: Download the latest Mac DMG and read the docs.
+  - name: 🤗 Models on HuggingFace
+    url: https://huggingface.co/Outlier-Ai
+    about: Inspect every model Outlier ships locally.
+
