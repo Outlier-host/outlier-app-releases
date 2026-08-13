@@ -11,7 +11,7 @@ blog post, or tweet — you never need to update it.
 
 ---
 
-**Requirements:** macOS 11+, Apple Silicon (M1 / M2 / M3 / M4).
+**Requirements:** macOS 12+, Apple Silicon (M1 / M2 / M3 / M4).
 
 **Install:** Download the DMG, double-click to mount, drag `Outlier.app` to
 `Applications`, eject the DMG.
