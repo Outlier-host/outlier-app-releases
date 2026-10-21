@@ -117,11 +117,24 @@ def main():
         w = json.load(open(walk_out))
     except Exception as e:  # noqa: BLE001
         w = {"error": f"no report ({type(e).__name__}); exit {rc}"}
+    # the same walk on the build Mac (macOS 26): what fails there too is not the floor's — the walk loads each library
+    # by path, out of the context its module loads it in, and some optional modules fail to import everywhere
+    base_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baseline", f"{a.expect_version}-macos26.json")
+    try:
+        base = json.load(open(base_file))
+    except OSError:
+        base = None
+    only_dl = sorted(set(w.get("dlopen_failed") or {}) - set((base or {}).get("dlopen_failed") or []))
+    only_im = sorted(set(w.get("import_failed") or {}) - set((base or {}).get("import_failed") or []))
     C["walk"] = {"ok": rc == 0 and "error" not in w and w.get("frozen") is True and w.get("archive_modules", 0) > 0
-                 and not w.get("dlopen_failed"),
+                 and base is not None and not only_dl and not only_im
+                 and w.get("dylibs") == base.get("dylibs") and w.get("modules") == base.get("modules"),
                  "exit": rc, "seconds": round(time.time() - t0, 1), "dylibs": w.get("dylibs"),
-                 "dlopen_failed": w.get("dlopen_failed"), "modules": w.get("modules"),
-                 "archive_modules": w.get("archive_modules"), "import_failed": len(w.get("import_failed") or {}),
+                 "modules": w.get("modules"), "archive_modules": w.get("archive_modules"),
+                 "baseline": os.path.basename(base_file) if base else "MISSING — the walk cannot be judged",
+                 "dlopen_failed_only_here": {k: (w.get("dlopen_failed") or {})[k][:300] for k in only_dl},
+                 "import_failed_only_here": {k: (w.get("import_failed") or {})[k][:300] for k in only_im},
+                 "dlopen_failed": len(w.get("dlopen_failed") or {}), "import_failed": len(w.get("import_failed") or {}),
                  "error": w.get("error")}
 
     # 3. the app, opened as a person opens it
