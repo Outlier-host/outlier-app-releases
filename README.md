@@ -16,7 +16,7 @@ the two addresses above instead.
 
 ---
 
-**Requirements:** macOS 26 or later (a free update), Apple Silicon (M1 or newer).
+**Requirements:** macOS 15 Sequoia or later (a free update), Apple Silicon (M1 or newer).
 
 **Install:** Download the DMG, double-click to mount, drag `Outlier.app` to
 `Applications`, eject the DMG.
