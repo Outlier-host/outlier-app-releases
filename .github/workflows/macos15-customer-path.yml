@@ -1,0 +1,90 @@
+# Outlier on macOS 15, the oldest macOS it declares, on real Apple Silicon: the DMG installed the way a buyer does,
+# then the floor (every Mach-O's minos), the engine's module walk (every bundled binary loaded, every frozen module
+# imported), the app opened and its engine answering /health, one request with no model (a .docx parsed) and the OCR
+# helper reading a picture of text. The driver is .github/ci/customer_path.py.
+#
+# WHY A RUNNER. The build Mac runs macOS 26, and a machine cannot find a floor it is standing on: the build proves each
+# binary DECLARES macOS 15 (minos), and only loading them on 15 proves dyld finds every symbol they need.
+#
+# WHAT A RUNNER CANNOT SAY. It is a VM with no GPU and about 7 GB of memory: no model is loaded here and no speed figure
+# from here means anything. Speed on macOS 15 is measured on a real Mac.
+#
+# Manual only. It lives in this PUBLIC repo because macOS runners are free here. The DMG comes from a release of this
+# repo — a draft candidate before publishing (reading a draft's assets needs contents: write; this job writes nothing)
+# or a published release after it — and must match the sha256 and version it is dispatched with.
+name: macos15-customer-path
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The release (draft or published) holding the DMG, e.g. v1.11.952"
+        required: true
+      expect_version:
+        description: "The version the DMG must hold, e.g. 1.11.952"
+        required: true
+      expect_sha256:
+        description: "The DMG's sha256 (from the build's SHA256SUMS)"
+        required: true
+
+permissions:
+  contents: write   # to read a DRAFT release's assets; nothing here writes
+
+jobs:
+  customer-path:
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      TAG: ${{ inputs.tag }}
+      VERSION: ${{ inputs.expect_version }}
+      SHA: ${{ inputs.expect_sha256 }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: What this runner is
+        run: |
+          set -euo pipefail
+          echo "OUT=$RUNNER_TEMP/customer-path" >> "$GITHUB_ENV"
+          echo "macOS   : $(sw_vers -productVersion) ($(sw_vers -buildVersion))"
+          echo "arch    : $(uname -m)"
+          echo "memory  : $(( $(sysctl -n hw.memsize) / 1073741824 )) GB"
+          test "$(uname -m)" = "arm64" || { echo "::error::not Apple Silicon: Outlier is arm64 only, this run proves nothing"; exit 1; }
+          test "$(sw_vers -productVersion | cut -d. -f1)" = "15" || { echo "::error::not macOS 15"; exit 1; }
+
+      - name: The DMG, with provenance
+        run: |
+          set -euo pipefail
+          mkdir -p "$OUT"
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "Outlier-$VERSION-arm64.dmg" --dir "$RUNNER_TEMP"
+          DMG="$RUNNER_TEMP/Outlier-$VERSION-arm64.dmg"
+          GOT=$(shasum -a 256 "$DMG" | cut -d' ' -f1)
+          echo "PROVENANCE tag=$TAG sha256=$GOT bytes=$(stat -f%z "$DMG")"
+          test "$GOT" = "$SHA" || { echo "::error::the DMG's sha256 is $GOT, not $SHA"; exit 1; }
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      - name: Install it the way a buyer does (mount, copy to /Applications)
+        run: |
+          set -euo pipefail
+          MNT="$RUNNER_TEMP/outlier-dmg"; mkdir -p "$MNT"
+          hdiutil attach -nobrowse -readonly -mountpoint "$MNT" "$DMG"
+          test -d "$MNT/Outlier.app" || { echo "::error::no Outlier.app in the DMG"; ls -la "$MNT"; exit 1; }
+          rm -rf /Applications/Outlier.app
+          cp -R "$MNT/Outlier.app" /Applications/
+          hdiutil detach "$MNT" -quiet
+          P=/Applications/Outlier.app/Contents/Info.plist
+          echo "installed $(defaults read $P CFBundleShortVersionString) · LSMinimumSystemVersion $(defaults read $P LSMinimumSystemVersion)"
+          test "$(defaults read $P CFBundleShortVersionString)" = "$VERSION" || { echo "::error::the DMG is not $VERSION"; exit 1; }
+          spctl --assess --type execute -vv /Applications/Outlier.app 2>&1 | tee "$OUT/gatekeeper.txt"
+
+      - name: Floor, module walk, the app, a no-model request, OCR
+        run: python3 .github/ci/customer_path.py --app /Applications/Outlier.app --out "$OUT" --expect-version "$VERSION"
+
+      - name: Keep the evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: customer-path-macos15-${{ inputs.expect_version }}
+          path: |
+            ${{ runner.temp }}/customer-path/*.json
+            ${{ runner.temp }}/customer-path/*.txt
