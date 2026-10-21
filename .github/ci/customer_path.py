@@ -137,6 +137,24 @@ def main():
                  "dlopen_failed": len(w.get("dlopen_failed") or {}), "import_failed": len(w.get("import_failed") or {}),
                  "error": w.get("error")}
 
+    # 2b. the packages the app's features stand on, each imported by the engine itself with nothing loaded before it
+    # (`--outlier-run-module PKG`: a package that imported then says it "cannot be directly executed"). The walk loads
+    # every library first, and that alone makes scipy.interpolate and mlx_whisper fail to import on EVERY macOS — they
+    # import fine this way (checked on the build Mac) — so for these the walk proves nothing and this does.
+    # (mlx_vlm is left out: its top-level import fails in 1.11.951 and 1.11.952 alike; Vision 3.8 does not use it.)
+    key = ["mlx_whisper", "scipy.interpolate", "mlx_lm", "docx", "pptx", "openpyxl", "pypdf", "trafilatura", "lxml",
+           "PIL", "numpy", "tokenizers", "transformers"]
+    home = os.path.join(a.out, "run-module-home")
+    os.makedirs(home, exist_ok=True)
+    bad = {}
+    for m in key:
+        _rc, o, e = sh([engine, "--outlier-run-module", m], timeout=300,
+                       env={**os.environ, "HOME": home, "OUTLIER_PORT": "18998"})
+        line = next((l for l in (o + e).splitlines() if "--outlier-run-module" in l), "")
+        if "cannot be directly executed" not in line:
+            bad[m] = (line or (o + e)[-300:])[:300]
+    C["key_imports"] = {"ok": not bad, "checked": len(key), "failed": bad}
+
     # 3. the app, opened as a person opens it
     rc, _o, err = sh(["open", a.app], timeout=60)
     h, t0 = None, time.time()
