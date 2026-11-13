@@ -1,5 +1,5 @@
 {
- "_about": "The module walk of Outlier 1.11.1010 on the build Mac (macOS 26.3.1), 2026-11-12, imports first: what fails to load or import there. The macOS 15 run is compared with this; only failures that are NOT here are the floor's.",
+ "_about": "The module walk of Outlier 1.11.1010 on the build Mac (macOS 26.3.1), 2026-11-13, imports first: what fails to load or import there. The macOS 15 run is compared with this; only failures that are NOT here are the floor's.",
  "version": "1.11.1010",
  "macos": "26.3.1",
  "dylibs": 225,
